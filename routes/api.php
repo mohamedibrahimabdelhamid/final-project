@@ -1,12 +1,8 @@
 <?php
-
+namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TagController;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\BookController;
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\AudiobookController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -52,3 +48,14 @@ Route::post('/cart', [CartController::class, 'store']);
 Route::delete('/cart/{cartItemId}', [CartController::class, 'destroy']);
 Route::get('/carts', [CartController::class, 'allCarts']);
 
+Route::get('/purchases', [PurchaseController::class, 'index']);
+Route::post('/purchases', [PurchaseController::class, 'store']);
+Route::get('/purchases/{id}', [PurchaseController::class, 'show']);
+Route::delete('/purchases/{id}', [PurchaseController::class, 'destroy']);
+
+Route::get('/users/{userId}/library', [PurchaseController::class, 'getUserLibrary']);
+
+
+Route::get('/transactions', [TransactionController::class, 'index']);
+Route::get('/transactions/user/{userId}', [TransactionController::class, 'userTransactions']);
+Route::post('/transactions', [TransactionController::class, 'store']);

@@ -23,25 +23,4 @@ class Book extends Model
     {
         return $this->belongsToMany(Tag::class);
     }
-
-    // public function usersInCart()
-    // {
-    //     return $this->belongsToMany(User::class, 'cart_items');
-    // }
-
-    // public function usersInLibrary()
-    // {
-    //     return $this->belongsToMany(User::class, 'user_library_items');
-    // }
-
-
-    // public function reviews()
-    // {
-    //     return $this->hasMany(Review::class);
-    // }
-
-    // public function discount()
-    // {
-    //     return $this->hasOne(Discount::class);
-    // }
 }

@@ -5,20 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Purchase extends Model
+class Transaction extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'user_id', 'book_id', 'type', 'date', 'expiry_date'
+        'user_id', 'amount', 'payment_method', 'status', 'date'
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function book()
-    {
-        return $this->belongsTo(Book::class);
     }
 }
