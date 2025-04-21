@@ -23,4 +23,9 @@ class Book extends Model
     {
         return $this->belongsToMany(Tag::class);
     }
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
 }

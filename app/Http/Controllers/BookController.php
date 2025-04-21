@@ -26,7 +26,6 @@ class BookController extends Controller
             'image' => 'nullable|image|mimes:jpg,jpeg,png'
         ]);
 
-        // Save files
         $fileUrl = $request->file('file')->store('ebooks', 'public');
         $imageUrl = $request->hasFile('image') ? $request->file('image')->store('book_images', 'public') : null;
 
@@ -52,6 +51,45 @@ class BookController extends Controller
         return Book::findOrFail($id);
     }
 
+    public function getByGenre($genre)
+    {
+        $books = Book::where('genre', $genre)->get();
+        return response()->json($books);
+    }
+
+    public function browse(Request $request)
+    {
+        $query = Book::query();
+
+        if ($request->has('genre')) {
+            $query->where('genre', $request->genre);
+        }
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%$search%")
+                    ->orWhere('author', 'like', "%$search%");
+            });
+        }
+
+        if ($request->has('sort')) {
+            switch ($request->sort) {
+                case 'popularity':
+                    $query->withCount('libraryItems')->orderByDesc('library_items_count');
+                    break;
+                case 'new':
+                    $query->orderByDesc('published_date');
+                    break;
+                case 'alphabetical':
+                    $query->orderBy('title');
+                    break;
+            }
+        }
+
+        return response()->json($query->get());
+    }
+
     public function update(Request $request, $id)
     {
         $book = Book::findOrFail($id);
@@ -67,27 +105,17 @@ class BookController extends Controller
             'image' => 'nullable|image|mimes:jpg,jpeg,png'
         ]);
 
-          // Delete and replace file if new one uploaded
-                // if ($request->hasFile('file')) {
-                //     if ($book->file_url && Storage::disk('public')->exists($book->file_url)) {
-                //         Storage::disk('public')->delete($book->file_url);
-                //     }
-                //     $book->file_url = $request->file('file')->store('ebooks', 'public');
-                // }
-
-                // // Delete and replace image if new one uploaded
-                // if ($request->hasFile('image')) {
-                //     if ($book->image && Storage::disk('public')->exists($book->image)) {
-                //         Storage::disk('public')->delete($book->image);
-                //     }
-                //     $book->image = $request->file('image')->store('book_images', 'public');
-            // }
-
         if ($request->hasFile('file')) {
+            if ($book->file_url && Storage::disk('public')->exists($book->file_url)) {
+                Storage::disk('public')->delete($book->file_url);
+            }
             $book->file_url = $request->file('file')->store('ebooks', 'public');
         }
 
         if ($request->hasFile('image')) {
+            if ($book->image && Storage::disk('public')->exists($book->image)) {
+                Storage::disk('public')->delete($book->image);
+            }
             $book->image = $request->file('image')->store('book_images', 'public');
         }
 
@@ -100,7 +128,18 @@ class BookController extends Controller
 
     public function destroy($id)
     {
-        Book::destroy($id);
+        $book = Book::findOrFail($id);
+
+        // Optional: Delete files from storage
+        if ($book->file_url && Storage::disk('public')->exists($book->file_url)) {
+            Storage::disk('public')->delete($book->file_url);
+        }
+        if ($book->image && Storage::disk('public')->exists($book->image)) {
+            Storage::disk('public')->delete($book->image);
+        }
+
+        $book->delete();
+
         return response()->json(['message' => 'Book deleted']);
     }
 }

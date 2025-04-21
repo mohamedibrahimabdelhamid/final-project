@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Discount;
+use Illuminate\Http\Request;
+
+class DiscountController extends Controller
+{
+    public function index()
+    {
+        return Discount::with('book')->get();
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'book_id' => 'required|exists:books,id',
+            'discount_type' => 'required|in:Fixed,Percentage',
+            'discount_value' => 'required|numeric|min:0',
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date'
+        ]);
+
+        $discount = Discount::create($request->all());
+
+        return response()->json([
+            'message' => 'Discount created successfully',
+            'discount' => $discount
+        ], 201);
+    }
+
+    public function show($id)
+    {
+        return Discount::with('book')->findOrFail($id);
+    }
+
+    public function destroy($id)
+    {
+        Discount::destroy($id);
+        return response()->json(['message' => 'Discount deleted']);
+    }
+}
+
