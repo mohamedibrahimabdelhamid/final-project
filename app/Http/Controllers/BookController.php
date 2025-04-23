@@ -10,7 +10,7 @@ class BookController extends Controller
 {
     public function index()
     {
-        return Book::all();
+        return Book::with(['audiobook', 'tags'])->get();
     }
 
     public function store(Request $request)
@@ -19,25 +19,37 @@ class BookController extends Controller
             'title' => 'required|string',
             'author' => 'required|string',
             'genre' => 'required|string',
+            'description' => 'sometimes|nullable|string',
             'price' => 'required|numeric',
             'availability' => 'required|in:Free,Purchase,Rent',
             'published_date' => 'required|date',
             'file' => 'required|file|mimes:pdf,epub',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png'
+            'image' => 'nullable|image|mimes:jpg,jpeg,png',
+            'text_sample' => 'nullable|file|mimes:pdf,txt',
+            'audio_sample' => 'nullable|file|mimes:mp3,wav',
+
         ]);
 
         $fileUrl = $request->file('file')->store('ebooks', 'public');
         $imageUrl = $request->hasFile('image') ? $request->file('image')->store('book_images', 'public') : null;
+        $textSampleUrl = $request->hasFile('text_sample') ? $request->file('text_sample')->store('samples/text', 'public') : null;
+        $audioSampleUrl = $request->hasFile('audio_sample') ? $request->file('audio_sample')->store('samples/audio', 'public') : null;
+
 
         $book = Book::create([
             'title' => $request->title,
             'author' => $request->author,
             'genre' => $request->genre,
+            'description' => $request->description,
             'price' => $request->price,
             'availability' => $request->availability,
             'published_date' => $request->published_date,
             'file_url' => $fileUrl,
-            'image' => $imageUrl
+            'image' => $imageUrl,
+            'text_sample' => $textSampleUrl,
+            'audio_sample' => $audioSampleUrl,
+
+
         ]);
 
         return response()->json([
@@ -48,8 +60,9 @@ class BookController extends Controller
 
     public function show($id)
     {
-        return Book::findOrFail($id);
+        return Book::with(['audiobook', 'tags'])->findOrFail($id);
     }
+
 
     public function getByGenre($genre)
     {
@@ -72,7 +85,12 @@ class BookController extends Controller
                     ->orWhere('author', 'like', "%$search%");
             });
         }
-
+        if ($request->has('tag')) {
+            $tags = explode(',', $request->tag);
+            $query->whereHas('tags', function ($q) use ($tags) {
+                $q->whereIn('tag_name', $tags);
+            });
+        }
         if ($request->has('sort')) {
             switch ($request->sort) {
                 case 'popularity':
@@ -87,7 +105,7 @@ class BookController extends Controller
             }
         }
 
-        return response()->json($query->get());
+        return response()->json($query->with('tags')->get());
     }
 
     public function update(Request $request, $id)
@@ -98,11 +116,15 @@ class BookController extends Controller
             'title' => 'sometimes|required|string',
             'author' => 'sometimes|required|string',
             'genre' => 'sometimes|required|string',
+            'description' => 'sometimes|nullable|string',
             'price' => 'sometimes|required|numeric',
             'availability' => 'sometimes|required|in:Free,Purchase,Rent',
             'published_date' => 'sometimes|required|date',
             'file' => 'nullable|file|mimes:pdf,epub',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png'
+            'image' => 'nullable|image|mimes:jpg,jpeg,png',
+            'text_sample' => 'nullable|file|mimes:pdf,txt',
+            'audio_sample' => 'nullable|file|mimes:mp3,wav',
+
         ]);
 
         if ($request->hasFile('file')) {
@@ -118,9 +140,23 @@ class BookController extends Controller
             }
             $book->image = $request->file('image')->store('book_images', 'public');
         }
+        if ($request->hasFile('text_sample')) {
+            if ($book->text_sample && Storage::disk('public')->exists($book->text_sample)) {
+                Storage::disk('public')->delete($book->text_sample);
+            }
+            $book->text_sample = $request->file('text_sample')->store('samples/text', 'public');
+        }
+
+        if ($request->hasFile('audio_sample')) {
+            if ($book->audio_sample && Storage::disk('public')->exists($book->audio_sample)) {
+                Storage::disk('public')->delete($book->audio_sample);
+            }
+            $book->audio_sample = $request->file('audio_sample')->store('samples/audio', 'public');
+        }
+
 
         $book->update($request->only([
-            'title', 'author', 'genre', 'price', 'availability', 'published_date'
+            'title', 'author', 'genre','description' , 'price', 'availability', 'published_date'
         ]));
 
         return response()->json($book);
@@ -136,6 +172,12 @@ class BookController extends Controller
         }
         if ($book->image && Storage::disk('public')->exists($book->image)) {
             Storage::disk('public')->delete($book->image);
+        }
+        if ($book->text_sample && Storage::disk('public')->exists($book->text_sample)) {
+            Storage::disk('public')->delete($book->text_sample);
+        }
+        if ($book->audio_sample && Storage::disk('public')->exists($book->audio_sample)) {
+            Storage::disk('public')->delete($book->audio_sample);
         }
 
         $book->delete();

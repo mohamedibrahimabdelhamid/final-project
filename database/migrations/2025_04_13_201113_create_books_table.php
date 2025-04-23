@@ -17,12 +17,15 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->string('author');
-            $table->string('image')->nullable(); // path to image
+            $table->string('image')->nullable();
             $table->string('genre');
+            $table->text('description')->nullable();
             $table->decimal('price', 8, 2);
             $table->enum('availability', ['Free', 'Purchase', 'Rent'])->default('Purchase');
             $table->date('published_date');
             $table->string('file_url'); // path to eBook file
+            $table->string('text_sample')->nullable();
+            $table->string('audio_sample')->nullable();
             $table->timestamps();
         });
     }

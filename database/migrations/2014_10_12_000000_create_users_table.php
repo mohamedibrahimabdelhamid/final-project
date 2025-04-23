@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('password');
             $table->enum('role', ['User', 'Admin'])->default('User');
             $table->timestamp('date_joined')->useCurrent();
+            $table->string('profile_picture')->nullable();
             $table->timestamps();
         });
     }

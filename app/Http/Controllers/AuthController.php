@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
@@ -16,7 +17,8 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email|min:3|max:64',
-            'password' => 'required|string|min:8|max:64|regex:/^\S*$/u',
+            'password' => 'required|string|min:8|max:64|regex:/^\S*$/u|confirmed',
+
         ]);
 
         if ($validator->fails()) {
@@ -55,6 +57,31 @@ class AuthController extends Controller
         }
 
         return response()->json(['message' => 'Welcome to Home'], 200);
+    }
+
+    public function uploadProfilePicture(Request $request, $id)
+{
+    $user = User::findOrFail($id);
+
+    $request->validate([
+        'profile_picture' => 'required|image|mimes:jpg,jpeg,png|max:2048'
+    ]);
+
+    if ($request->hasFile('profile_picture')) {
+        // Optional: delete old picture
+        if ($user->profile_picture) {
+            Storage::disk('public')->delete($user->profile_picture);
+        }
+
+        $path = $request->file('profile_picture')->store('profile_pictures', 'public');
+        $user->profile_picture = $path;
+        $user->save();
+    }
+
+        return response()->json([
+            'message' => 'Profile picture updated successfully.',
+            'user' => $user
+        ]); 
     }
 }
        // public function register(Request $request)

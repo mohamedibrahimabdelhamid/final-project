@@ -20,6 +20,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/users/{id}/upload-profile', [AuthController::class, 'uploadProfilePicture']);
+
 
 Route::get('/books', [BookController::class, 'index']);         // all books
 Route::get('/books/browse', [BookController::class, 'browse']);// for seaech and filter and sort
@@ -27,10 +29,7 @@ Route::get('/books/{id}', [BookController::class, 'show']);     // Show single b
 Route::post('/books', [BookController::class, 'store']);        // Create book
 Route::put('/books/{id}', [BookController::class, 'update']);   // Update book
 Route::delete('/books/{id}', [BookController::class, 'destroy']);// Delete book
-Route::get('/books/genre/{genre}', [BookController::class, 'getByGenre']); // API to retrieve books by genre
-
-
-
+Route::get('/books/genre/{genre}', [BookController::class, 'getByGenre']); // API to retrieve books by genre`
 Route::get('/audiobooks', [AudiobookController::class, 'index']);// all audiobooks
 Route::post('/audiobooks', [AudiobookController::class, 'store']);// Create audiobook
 Route::get('/audiobooks/{id}', [AudiobookController::class, 'show']);// show audiobook by id
