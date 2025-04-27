@@ -5,9 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Book;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class BookController extends Controller
 {
+    public function __construct()
+    {
+
+        $this->middleware('auth:api');
+    }
     public function index()
     {
         return Book::with(['audiobook', 'tags'])->get();
@@ -15,6 +21,10 @@ class BookController extends Controller
 
     public function store(Request $request)
     {
+        $user = auth()->user();
+        if ($user->role !== 'Admin') {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
         $request->validate([
             'title' => 'required|string',
             'author' => 'required|string',
@@ -75,7 +85,8 @@ class BookController extends Controller
         $query = Book::query();
 
         if ($request->has('genre')) {
-            $query->where('genre', $request->genre);
+            $genres = explode(',', $request->genre);
+            $query->whereIn('genre', $genres);
         }
 
         if ($request->has('search')) {
@@ -91,6 +102,7 @@ class BookController extends Controller
                 $q->whereIn('tag_name', $tags);
             });
         }
+
         if ($request->has('sort')) {
             switch ($request->sort) {
                 case 'popularity':
@@ -110,6 +122,10 @@ class BookController extends Controller
 
     public function update(Request $request, $id)
     {
+        $user = auth()->user();
+        if ($user->role !== 'Admin') {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
         $book = Book::findOrFail($id);
 
         $request->validate([
@@ -164,6 +180,10 @@ class BookController extends Controller
 
     public function destroy($id)
     {
+        $user = auth()->user();
+        if ($user->role !== 'Admin') {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
         $book = Book::findOrFail($id);
 
         // Optional: Delete files from storage

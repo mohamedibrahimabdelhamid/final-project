@@ -7,6 +7,11 @@ use Illuminate\Http\Request;
 
 class DiscountController extends Controller
 {
+    public function __construct()
+    {
+
+        $this->middleware('auth:api');
+    }
     public function index()
     {
         return Discount::with('book')->get();
@@ -14,6 +19,10 @@ class DiscountController extends Controller
 
     public function store(Request $request)
     {
+        $user = auth()->user();
+        if ($user->role !== 'Admin') {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
         $request->validate([
             'book_id' => 'required|exists:books,id',
             'discount_type' => 'required|in:Fixed,Percentage',
@@ -37,6 +46,10 @@ class DiscountController extends Controller
 
     public function destroy($id)
     {
+        $user = auth()->user();
+        if ($user->role !== 'Admin') {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
         Discount::destroy($id);
         return response()->json(['message' => 'Discount deleted']);
     }

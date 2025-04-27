@@ -8,19 +8,28 @@ use Carbon\Carbon;
 
 class ReviewController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth:api'); // Apply auth middleware
+    }
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+
             'book_id' => 'required|exists:books,id',
             // 'audiobook_id' => 'nullable|exists:audiobooks,id',
             'rating' => 'required|integer|min:1|max:5',
             'comment' => 'nullable|string'
         ]);
+        $userId = auth()->id();
 
-        $review = Review::create(array_merge($validated, [
+        $review = Review::create([
+            'user_id' => $userId,
+            'book_id' => $validated['book_id'],
+            'rating' => $validated['rating'],
+            'comment' => $validated['comment'] ?? null,
             'date' => now(),
-        ]));
+        ]);
 
         return response()->json([
             'message' => 'Review submitted successfully.',
@@ -31,12 +40,24 @@ class ReviewController extends Controller
     // Get all reviews for a book
     public function bookReviews($bookId)
     {
-        return Review::where('book_id', $bookId)->with('user')->get();
+        return Review::where('book_id', $bookId)
+            ->with('user:id,name') // load user's name with review
+            ->get();
     }
+
+    // Delete a review (only owner can delete)
     public function destroy($id)
     {
         $review = Review::findOrFail($id);
+
+        if ($review->user_id !== auth()->id()) {
+            return response()->json([
+                'message' => 'You are not authorized to delete this review.'
+            ], 403);
+        }
+
         $review->delete();
+
         return response()->json([
             'message' => 'Review deleted successfully.'
         ]);

@@ -15,6 +15,10 @@ class TagController extends Controller
 
     public function store(Request $request)
     {
+        $user = auth()->user();
+        if ($user->role !== 'Admin') {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
         $request->validate([
             'tag_name' => 'required|string|unique:tags,tag_name'
         ]);
@@ -31,6 +35,10 @@ class TagController extends Controller
 
     public function update(Request $request, $id)
     {
+        $user = auth()->user();
+        if ($user->role !== 'Admin') {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
         $tag = Tag::findOrFail($id);
         $request->validate([
             'tag_name' => 'required|string|unique:tags,tag_name,' . $id
@@ -42,6 +50,10 @@ class TagController extends Controller
 
     public function destroy($id)
     {
+        $user = auth()->user();
+        if ($user->role !== 'Admin') {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
         Tag::destroy($id);
         return response()->json(['message' => 'Tag deleted']);
     }
@@ -50,7 +62,7 @@ class TagController extends Controller
     public function attachToBook(Request $request, $bookId)
     {
         $request->validate([
-            'tag_ids' => 'required|array',
+            'tag_ids' => 'array',
             'tag_ids.*' => 'exists:tags,id'
         ]);
 
@@ -59,4 +71,13 @@ class TagController extends Controller
 
         return response()->json(['message' => 'Tags attached to book']);
     }
+    // Detach a single tag from a book
+    public function detachFromBook($bookId, $tagId)
+    {
+        $book = Book::findOrFail($bookId);
+        $book->tags()->detach($tagId);
+
+        return response()->json(['message' => 'Tag detached from book']);
+    }
+
 }

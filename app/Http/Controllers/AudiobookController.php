@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\Storage;
 
 class AudiobookController extends Controller
 {
+    public function __construct()
+    {
+
+        $this->middleware('auth:api');
+    }
     public function index()
     {
         return Audiobook::with('book')->get();
@@ -15,6 +20,11 @@ class AudiobookController extends Controller
 
     public function store(Request $request)
     {
+        $user = auth()->user();
+        if ($user->role !== 'Admin') {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
         $request->validate([
             'book_id' => 'required|exists:books,id',
             'file' => 'required|file|mimes:mp3,wav|max:20480' // 20MB = 20480KB
@@ -43,6 +53,10 @@ class AudiobookController extends Controller
 
     public function update(Request $request, $id)
 {
+    $user = auth()->user();
+    if ($user->role !== 'Admin') {
+        return response()->json(['message' => 'Unauthorized'], 401);
+    }
     $audiobook = Audiobook::findOrFail($id);
 
         $request->validate([
@@ -66,6 +80,10 @@ class AudiobookController extends Controller
 
     public function destroy($id)
     {
+        $user = auth()->user();
+        if ($user->role !== 'Admin') {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
         $audiobook = Audiobook::findOrFail($id);
 
         if ($audiobook->file_url && Storage::disk('public')->exists($audiobook->file_url)) {
