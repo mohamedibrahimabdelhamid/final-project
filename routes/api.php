@@ -59,7 +59,7 @@ Route::middleware('auth:api')->group(function () {
 
     Route::get('/tags', [TagController::class, 'index']);
     Route::post('/tags', [TagController::class, 'store']);
-    Route::get('/tags/{id}', [TagController::class, 'show']); 
+    Route::get('/tags/{id}', [TagController::class, 'show']);
     Route::put('/tags/{id}', [TagController::class, 'update']);
     Route::delete('/tags/{id}', [TagController::class, 'destroy']);
 });
@@ -73,4 +73,7 @@ Route::get('/reviews/book/{bookId}', [ReviewController::class, 'bookReviews']);
 
 Route::get('/discounts', [DiscountController::class, 'index']);
 Route::get('/discounts/{id}', [DiscountController::class, 'show']);
+
+Route::get('/files/{type}/{filename}', [FileController::class, 'serve']);
+
 
