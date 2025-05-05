@@ -64,7 +64,7 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/tags/{id}', [TagController::class, 'destroy']);
 });
 
-Route::get('/books', [BookController::class, 'index']);         // all books
+Route::get('/books', [BookController::class, 'index']);       // all books
 Route::get('/books/browse', [BookController::class, 'browse']);// for seaech and filter and sort
 Route::get('/books/{id}', [BookController::class, 'show']);     // Show single book by id
 Route::get('/audiobooks/{id}', [AudiobookController::class, 'show']);// show audiobook by id

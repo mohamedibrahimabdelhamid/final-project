@@ -19,14 +19,27 @@ class PurchaseController extends Controller
             'type' => 'required|in:purchase,rent',
         ]);
 
-        $authUserId = auth()->id(); // Logged-in user ID
+        $authUserId = auth()->id();
         $type = $validated['type'];
+        $bookId = $validated['book_id'];
+
+        // Check if the user already owns or rented the book
+        $existing = UserLibraryItem::where('user_id', $authUserId)
+            ->where('book_id', $bookId)
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'message' => 'You already own or have rented this book.'
+            ], 409); // 409 Conflict
+        }
+
         $date = Carbon::now();
         $expiryDate = $type === 'rent' ? $date->copy()->addDays(30) : null;
 
         $purchase = Purchase::create([
             'user_id' => $authUserId,
-            'book_id' => $validated['book_id'],
+            'book_id' => $bookId,
             'type' => $type,
             'date' => $date,
             'expiry_date' => $expiryDate,
@@ -42,7 +55,7 @@ class PurchaseController extends Controller
 
         UserLibraryItem::create([
             'user_id' => $authUserId,
-            'book_id' => $validated['book_id'],
+            'book_id' => $bookId,
             'access_type' => $type,
         ]);
 
